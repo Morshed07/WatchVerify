@@ -43,6 +43,7 @@ INSTALLED_APPS = [
     ###### third party apps ######
     'rest_framework',
     'rest_framework_simplejwt',
+    "corsheaders",
     ##############################
 
     ##### manual apps #####
@@ -54,6 +55,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -107,8 +109,40 @@ DEFAULT_FROM_EMAIL = config(
     'DEFAULT_FROM_EMAIL',
     default='noreply@chronoverify.com'
 )
+
 GOOGLE_CLIENT_ID = config('GOOGLE_CLIENT_ID')
 GOOGLE_CLIENT_SECRET = config('GOOGLE_CLIENT_SECRET')
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+
+FIREBASE_SERVICE_ACCOUNT_FILE = BASE_DIR / "firebase" / "serviceAccountKey.json"
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8000",
+    "http://127.0.0.1:5500",
+]
+
+CORS_ALLOW_METHODS = (
+    "DELETE",
+    "GET",
+    "OPTIONS",
+    "PATCH",
+    "POST",
+    "PUT",
+)
+
+CORS_ALLOW_HEADERS = (
+    "accept",
+    "authorization",
+    "content-type",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+)
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://read-and-write.example.com",
+]
 #################################
 
 

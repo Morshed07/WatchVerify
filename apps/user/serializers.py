@@ -4,21 +4,34 @@ from .models import User, OtpLog
 from .utils import (
     send_registration_otp_email,
     send_login_otp_email,
-    send_password_reset_email,
     send_otp_email,
-    get_tokens_for_user
+    get_tokens_for_user,
+    send_forgot_password_otp_email
 )
-from google.oauth2 import id_token
-from google.auth.transport import requests
-from django.conf import settings
-from google.auth.transport import requests as google_requests
+from apps.user.firebase import verify_firebase_token
 
 
 class UserSerializer(serializers.ModelSerializer):
+    can_scan = serializers.BooleanField(read_only=True)
+
     class Meta:
         model = User
-        fields = ('id', 'first_name', 'last_name', 'email', 'profile_image')
-        read_only_fields = ('id',)
+        fields = [
+            "id",
+            "email",
+            "first_name",
+            "last_name",
+            "profile_image",
+            "profile_image_url",
+            "subscription_type",
+            "subscription_start_date",
+            "subscription_end_date",
+            "free_scans_remaining",
+            "total_scans_used",
+            "is_premium",
+            "can_scan",
+        ]
+        read_only_fields = ['id', 'email', 'subscription_type', 'subscription_start_date',]
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -100,7 +113,6 @@ class LoginRequestOtpSerializer(serializers.Serializer):
         if not user.is_active:
             raise serializers.ValidationError("Account not verified")
 
-        # ✅ Validate password
         if not user.check_password(password):
             raise serializers.ValidationError("Invalid credentials")
 
@@ -108,7 +120,6 @@ class LoginRequestOtpSerializer(serializers.Serializer):
         return attrs
 
     def save(self):
-        # ✅ Send OTP only after password validation
         send_login_otp_email(self.user)
 
         return {
@@ -162,43 +173,193 @@ class ResendOtpSerializer(serializers.Serializer):
         return otp
 
 
-class GoogleAuthSerializer(serializers.Serializer):
+# class GoogleAuthSerializer(serializers.Serializer):
+#     id_token = serializers.CharField()
+
+#     def validate(self, attrs):
+#         try:
+#             payload = id_token.verify_oauth2_token(
+#                 attrs["id_token"],
+#                 google_requests.Request(),
+#                 settings.GOOGLE_CLIENT_ID,
+#             )
+#         except Exception:
+#             raise serializers.ValidationError("Invalid Google token")
+
+#         email = payload.get("email")
+#         if not email:
+#             raise serializers.ValidationError("Google account has no email")
+
+#         full_name = payload.get("name", "")
+#         first_name = full_name.split(" ")[0] if full_name else ""
+#         last_name = " ".join(full_name.split(" ")[1:]) if full_name else ""
+#         picture_url = payload.get("picture")
+
+#         user = User.objects.filter(email=email).first()
+
+#         if not user:
+#             user = User.objects.create_user(
+#                 email=email,
+#                 first_name=first_name,
+#                 last_name=last_name,
+#                 profile_image_url=picture_url,
+#                 is_active=True,
+#                 is_superuser=False,
+#                 is_staff=False,
+#             )
+#             user.save()
+#         if picture_url:
+#             user.profile_image_url = picture_url
+#             user.save(update_fields=["profile_image_url"])
+
+#         tokens = get_tokens_for_user(user)
+
+#         return {
+#             "user": user,
+#             "tokens": tokens,
+#         }
+
+
+# from apps.user.models import User
+# from apps.user.tokens import get_tokens_for_user
+
+class FirebaseAuthSerializer(serializers.Serializer):
     id_token = serializers.CharField()
 
     def validate(self, attrs):
         try:
-            # 1. Verify the token with Google
-            payload = id_token.verify_oauth2_token(
-                attrs['id_token'],
-                google_requests.Request(),
-                settings.GOOGLE_CLIENT_ID
-            )
+            decoded = verify_firebase_token(attrs["id_token"])
         except Exception:
-            raise serializers.ValidationError("Invalid Google token")
+            raise serializers.ValidationError("Invalid Firebase token")
+        email = decoded.get("email")
+        name = decoded.get("name", "")
+        picture = decoded.get("picture")
 
-        # 2. Extract user info from Google payload
-        email = payload.get("email")
-        name = payload.get("name", "")
-        picture_url = payload.get("picture")  # Google returns this URL
+        first_name = name.split(" ")[0] if name else ""
+        last_name = " ".join(name.split(" ")[1:]) if name else ""
 
-        # 3. Get or Create user
-        # We use email as the unique identifier
         user, created = User.objects.get_or_create(
             email=email,
             defaults={
-                "username": email,
-                "first_name": name.split(" ")[0] if name else "",
-                "last_name": " ".join(name.split(" ")[1:]) if name else "",
+                "first_name": first_name,
+                "last_name": last_name,
+                "is_active": True,
+                "is_superuser": False,
+                "is_staff": False,
             }
         )
 
-        user.profile_image_url = picture_url
-        user.save()
+        if picture and not user.profile_image_url:
+            user.profile_image_url = picture
+            user.save(update_fields=["profile_image_url"])
 
-        # 5. Generate your backend tokens (using your helper function)
         tokens = get_tokens_for_user(user)
 
+        user_data = UserSerializer(user).data
+
         return {
-            "user": user,
+            "user": user_data,
             "tokens": tokens
+        }
+
+
+class ForgotPasswordRequestSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+    def validate_email(self, value):
+        try:
+            self.user = User.objects.get(email=value, is_active=True)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("User not found.")
+        return value
+
+    def save(self):
+        otp_log = OtpLog.objects.create(user=self.user)
+        otp = otp_log.generate_otp()
+
+        send_forgot_password_otp_email(self.user)
+
+        return {"message": "OTP sent successfully"}
+
+
+class ForgotPasswordVerifyOtpSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=6)
+
+    def validate(self, attrs):
+        email = attrs["email"]
+        otp = attrs["otp"]
+
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Invalid email.")
+
+        otp_log = (
+            OtpLog.objects
+            .filter(user=user, otp=otp)
+            .order_by("-created_at")
+            .first()
+        )
+
+        if not otp_log:
+            raise serializers.ValidationError("Invalid OTP.")
+
+        if not otp_log.otp_is_valid():
+            raise serializers.ValidationError("OTP expired.")
+
+        return attrs
+
+
+class ResetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=6)
+    new_password = serializers.CharField(
+        min_length=8,
+        write_only=True
+    )
+    confirm_password = serializers.CharField(
+        min_length=8,
+        write_only=True
+    )
+
+    def validate(self, attrs):
+        email = attrs.get("email")
+        otp = attrs.get("otp")
+        new_password = attrs.get("new_password")
+        confirm_password = attrs.get("confirm_password")
+
+        if new_password != confirm_password:
+            raise serializers.ValidationError({
+                "confirm_password": "Passwords do not match."
+            })
+
+        try:
+            self.user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            raise serializers.ValidationError("Invalid email.")
+
+        otp_log = (
+            OtpLog.objects
+            .filter(user=self.user, otp=otp)
+            .order_by("-created_at")
+            .first()
+        )
+
+        if not otp_log:
+            raise serializers.ValidationError("Invalid OTP.")
+
+        if not otp_log.otp_is_valid():
+            raise serializers.ValidationError("OTP expired.")
+
+        return attrs
+
+    def save(self):
+        self.user.set_password(self.validated_data["new_password"])
+        self.user.save(update_fields=["password"])
+
+        OtpLog.objects.filter(user=self.user).delete()
+
+        return {
+            "message": "Password reset successful"
         }

@@ -7,8 +7,15 @@ from .serializers import (
     LoginRequestOtpSerializer,
     LoginVerifyOtpSerializer,
     ResendOtpSerializer,
-    GoogleAuthSerializer,
     UserSerializer,
+    FirebaseAuthSerializer,
+    ForgotPasswordRequestSerializer,
+    ForgotPasswordVerifyOtpSerializer,
+    ResetPasswordSerializer
+)
+from rest_framework.permissions import(
+    IsAuthenticated,
+    AllowAny
 )
 
 # Create your views here.
@@ -54,15 +61,64 @@ class ResendOtpView(APIView):
         return Response({"message": "OTP resent"}, status=200)
     
 
-class GoogleAuthView(APIView):
+# class GoogleAuthView(APIView):
+#     def post(self, request):
+#         serializer = GoogleAuthSerializer(data=request.data)
+#         serializer.is_valid(raise_exception=True)
+
+#         data = serializer.validated_data
+#         return Response({
+#             "user": UserSerializer(data["user"]).data,
+#             "tokens": data["tokens"]
+#         })
+
+class FirebaseAuthView(APIView):
+    permission_classes = [AllowAny]
+
     def post(self, request):
-        serializer = GoogleAuthSerializer(data=request.data)
+        serializer = FirebaseAuthSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        return Response(serializer.validated_data)
+    
 
-        data = serializer.validated_data
-        return Response({
-            "user": UserSerializer(data["user"]).data,
-            "tokens": data["tokens"]
-        })
+class ForgotPasswordView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = ForgotPasswordRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.save(), status=200)
 
 
+class ForgotPasswordVerifyOtpView(APIView):
+    def post(self, request):
+        serializer = ForgotPasswordVerifyOtpSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.validated_data, status=200)
+    
+
+class ResetPasswordView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        serializer = ResetPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.save(), status=200)
+    
+
+class UserMeView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        serializer = UserSerializer(request.user)
+        return Response(serializer.data, status=200)
+
+    def patch(self, request):
+        serializer = UserSerializer(
+            request.user,
+            data=request.data,
+            partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=200)

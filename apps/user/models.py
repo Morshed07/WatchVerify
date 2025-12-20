@@ -107,7 +107,6 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
     
     @property
     def is_subscription_active(self):
-        """Check if user has an active subscription"""
         if self.subscription_type == 'free':
             return self.free_scans_remaining > 0
         
@@ -117,7 +116,6 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
     
     @property
     def can_scan(self):
-        """Check if user can perform a scan"""
         if self.subscription_type == 'free':
             return self.free_scans_remaining > 0
         elif self.subscription_type == 'unlimited':
@@ -126,7 +124,6 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
             return self.is_subscription_active
     
     def decrement_free_scans(self):
-        """Decrease free scan count"""
         if self.subscription_type == 'free' and self.free_scans_remaining > 0:
             self.free_scans_remaining -= 1
             self.save(update_fields=['free_scans_remaining'])

@@ -60,3 +60,4 @@ Thumbs.db
 
 # Environment variables
 .env
+firebase/*.json

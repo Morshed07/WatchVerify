@@ -67,14 +67,16 @@ def send_login_otp_email(user: User):
     return email.send()
 
 
-def send_password_reset_email(user: User, otp: str):
+def send_forgot_password_otp_email(user: User):
+    otp_obj = OtpLog.objects.create(user=user)
+    otp_code = otp_obj.generate_otp()
     html_message = render_to_string(
-        'email/password_reset_email.html',
-        {'otp': otp, 'user': user}
+        'email/otp_email.html',
+        {'otp': otp_code, 'user': user}
     )
 
     email = EmailMessage(
-        subject='Reset your password',
+        subject='You requested a password reset OTP',
         body=html_message,
         from_email=settings.DEFAULT_FROM_EMAIL,
         to=[user.email]
