@@ -49,6 +49,9 @@ INSTALLED_APPS = [
     ##### manual apps #####
     'apps.user',
     'apps.core',
+    'apps.subscription',
+    'apps.payment',
+    'apps.watchanalysis',
     ########################
 ]
 
@@ -84,11 +87,16 @@ WSGI_APPLICATION = 'chronoverify.wsgi.application'
 
 
 ######manually added settings######
+
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
-    ],
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    # "DEFAULT_PERMISSION_CLASSES": (
+    #     "rest_framework.permissions.IsAuthenticated",
+    # )
 }
+
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
@@ -202,8 +210,8 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 AUTH_USER_MODEL = 'user.User'
 
-AUTHENTICATION_BACKENDS = (
-    'social_core.backends.google.GoogleOAuth2',
-    'social_core.backends.facebook.FacebookOAuth2',
-    'django.contrib.auth.backends.ModelBackend',
-)
+# AUTHENTICATION_BACKENDS = (
+#     'social_core.backends.google.GoogleOAuth2',
+#     'social_core.backends.facebook.FacebookOAuth2',
+#     'django.contrib.auth.backends.ModelBackend',
+# )

@@ -42,8 +42,7 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
     SUBSCRIPTION_TYPES = [
         ('free', 'Free'),
         ('pay_per_scan', 'Pay Per Scan'),
-        ('weekly', 'Weekly'),
-        ('monthly', 'Monthly'),
+        ('premium', 'Premium'),
         ('unlimited', 'Unlimited'),
     ]
     email = models.EmailField(unique=True, max_length=255)

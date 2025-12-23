@@ -120,11 +120,11 @@ class LoginRequestOtpSerializer(serializers.Serializer):
         return attrs
 
     def save(self):
+        # Send OTP email
         send_login_otp_email(self.user)
 
-        return {
-            "message": "OTP sent successfully"
-        }
+        # Return user so view can access email
+        return self.user
 
 
 class LoginVerifyOtpSerializer(serializers.Serializer):
@@ -220,9 +220,6 @@ class ResendOtpSerializer(serializers.Serializer):
 #         }
 
 
-# from apps.user.models import User
-# from apps.user.tokens import get_tokens_for_user
-
 class FirebaseAuthSerializer(serializers.Serializer):
     id_token = serializers.CharField()
 
@@ -258,7 +255,7 @@ class FirebaseAuthSerializer(serializers.Serializer):
         user_data = UserSerializer(user).data
 
         return {
-            "user": user_data,
+            "user": user_data, 
             "tokens": tokens
         }
 
