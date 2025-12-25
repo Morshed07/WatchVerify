@@ -40,19 +40,23 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    ###### third party apps ######
+    ###### 3rd party apps ######
+
     'rest_framework',
     'rest_framework_simplejwt',
-    "corsheaders",
-    ##############################
+    'corsheaders',
 
+    ############################
+    
     ##### manual apps #####
-    'apps.user',
+
     'apps.core',
+    'apps.user',
     'apps.subscription',
     'apps.payment',
     'apps.watchanalysis',
-    ########################
+
+    #######################
 ]
 
 MIDDLEWARE = [

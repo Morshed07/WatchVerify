@@ -9,7 +9,6 @@ from .serializers import InAppPurchaseSerializer
 from .services import InAppPurchaseService
 
 
-# ---------------- Verify Google Play Purchase ----------------
 class VerifyGooglePurchaseAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -58,7 +57,6 @@ class VerifyGooglePurchaseAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
-# ---------------- Verify Apple App Store Purchase ----------------
 class VerifyApplePurchaseAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -105,7 +103,6 @@ class VerifyApplePurchaseAPIView(APIView):
             }, status=status.HTTP_400_BAD_REQUEST)
 
 
-# ---------------- Purchase History ----------------
 class PurchaseHistoryAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -114,20 +111,6 @@ class PurchaseHistoryAPIView(APIView):
         Get last 20 purchases of the authenticated user
         GET /api/purchases/history/
         """
-        purchases = InAppPurchase.objects.filter(user=request.user).order_by('-created_at')[:20]
-        serializer = InAppPurchaseSerializer(purchases, many=True)
-        return Response({
-            'success': True,
-            'data': serializer.data
-        }, status=status.HTTP_200_OK)
-
-
-# ---------------- Purchase History ----------------
-class PurchaseHistoryAPIView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        """Get last 20 purchases for the authenticated user"""
         purchases = InAppPurchase.objects.filter(user=request.user).order_by('-created_at')[:20]
         serializer = InAppPurchaseSerializer(purchases, many=True)
         return Response({
