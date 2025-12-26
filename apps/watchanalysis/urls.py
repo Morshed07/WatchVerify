@@ -1,7 +1,14 @@
 from django.urls import path
-from .views import *
-
+from .views import (
+    WatchAnalysisAPIView,
+    WatchAnalysisReportAPIView,
+    WatchAnalysisStatusAPIView,
+    WatchAnalysisHistoryAPIView,
+)
 
 urlpatterns = [
-    path('analysis-report/', WatchAnalysisAPIView.as_view(), name='watch-analysis-report')
+    path('analyses/', WatchAnalysisAPIView.as_view()),
+    path('analyses/history/', WatchAnalysisHistoryAPIView.as_view()),
+    path('analyses/<uuid:pk>/report/', WatchAnalysisReportAPIView.as_view()),
+    path('analyses/<uuid:pk>/status/', WatchAnalysisStatusAPIView.as_view()),
 ]

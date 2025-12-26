@@ -12,22 +12,33 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 from datetime import timedelta
-from decouple import config
+import environ
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
+# Initialize environ
+env = environ.Env(
+    DEBUG=(bool, False),
+)
+
+# Read .env file
+environ.Env.read_env(BASE_DIR / ".env")
+
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-zu^y6i6873e9@+mteels#h)%deb+(4$n54#h5f%^i+2wld!%*3')
+SECRET_KEY = env(
+    "SECRET_KEY",
+    default="django-insecure-zu^y6i6873e9@+mteels#h)%deb+(4$n54#h5f%^i+2wld!%*3"
+)
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env.bool("DEBUG", default=False)
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = env("ALLOWED_HOSTS", default="localhost").split(",")
 
 
 # Application definition
@@ -40,23 +51,21 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    ###### 3rd party apps ######
-
+    ###### third party apps ######
     'rest_framework',
     'rest_framework_simplejwt',
-    'corsheaders',
+    "corsheaders",
+    'django_celery_results',
+    'django_celery_beat',
+    ##############################
 
-    ############################
-    
     ##### manual apps #####
-
-    'apps.core',
     'apps.user',
+    'apps.core',
     'apps.subscription',
     'apps.payment',
     'apps.watchanalysis',
-
-    #######################
+    ########################
 ]
 
 MIDDLEWARE = [
@@ -101,6 +110,28 @@ REST_FRAMEWORK = {
     # )
 }
 
+# ============================
+# CELERY CONFIGURATION
+# ============================
+
+CELERY_BROKER_URL = env(
+    "CELERY_BROKER_URL",
+    default="redis://localhost:6379/0"
+)
+CELERY_RESULT_BACKEND = env(
+    "CELERY_RESULT_BACKEND",
+    default="redis://localhost:6379/0"
+)
+
+CELERY_ACCEPT_CONTENT = ["json"]
+CELERY_TASK_SERIALIZER = "json"
+CELERY_RESULT_SERIALIZER = "json"
+
+CELERY_TIMEZONE = "UTC"
+
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
+
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
@@ -108,30 +139,33 @@ SIMPLE_JWT = {
 }
 
 
-EMAIL_BACKEND = config(
-    'EMAIL_BACKEND',
-    default='django.core.mail.backends.smtp.EmailBackend'
-)
-EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
-EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
-EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
-EMAIL_HOST_USER = config('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD')
-DEFAULT_FROM_EMAIL = config(
-    'DEFAULT_FROM_EMAIL',
-    default='noreply@chronoverify.com'
+EMAIL_BACKEND = env(
+    "EMAIL_BACKEND",
+    default="django.core.mail.backends.smtp.EmailBackend"
 )
 
-GOOGLE_CLIENT_ID = config('GOOGLE_CLIENT_ID')
-GOOGLE_CLIENT_SECRET = config('GOOGLE_CLIENT_SECRET')
+EMAIL_HOST = env("EMAIL_HOST", default="smtp.gmail.com")
+EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+
+DEFAULT_FROM_EMAIL = env(
+    "DEFAULT_FROM_EMAIL",
+    default="noreply@chronoverify.com"
+)
+
+GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET")
 
 FIREBASE_SERVICE_ACCOUNT_FILE = BASE_DIR / "firebase" / "serviceAccountKey.json"
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:8000",
     "http://127.0.0.1:5500",
+    "http://127.0.0.1:5500",
+    "http://127.0.0.1:5500"
 ]
 
 CORS_ALLOW_METHODS = (
@@ -214,8 +248,36 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 AUTH_USER_MODEL = 'user.User'
 
-# AUTHENTICATION_BACKENDS = (
-#     'social_core.backends.google.GoogleOAuth2',
-#     'social_core.backends.facebook.FacebookOAuth2',
-#     'django.contrib.auth.backends.ModelBackend',
-# )
+AUTHENTICATION_BACKENDS = (
+    'social_core.backends.google.GoogleOAuth2',
+    'social_core.backends.facebook.FacebookOAuth2',
+    'django.contrib.auth.backends.ModelBackend',
+)
+
+OPENAI_API_KEY = env('OPENAI_API_KEY')
+OPENAI_MODEL = env('OPENAI_MODEL')
+
+
+# Logging
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+    },
+    'root': {
+        'handlers': ['console'],
+        'level': 'INFO',
+    },
+}
+
+CELERY_RESULT_BACKEND = "django-db"
+
+CELERY_BEAT_SCHEDULE = {
+    'cleanup-task': {
+        'task': 'celery.backend_cleanup',
+        'schedule': crontab(hour=4, minute=0),
+    },
+}
