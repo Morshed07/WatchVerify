@@ -1,9 +1,9 @@
 from django.db import transaction
 from django.utils import timezone
 from decimal import Decimal
-from .models import *
+from ..models import *
 from apps.subscription.models import Subscription
-from .ai import WatchAIAnalyzer
+from .ai_service import WatchAIAnalyzer
 import logging
 import time
 import json
@@ -37,9 +37,25 @@ class WatchAnalysisService:
                 return True, "OK"
             else:
                 return False, "Pay-per-scan used. Please purchase another scan."
+            
+        elif user.subscription_type == 'premium':
+            # Premium: check if subscription is active (not expired)
+            active_sub = Subscription.objects.filter(
+                user=user,
+                status='active'
+            ).first()
+            
+            if not active_sub:
+                return False, "No active subscription. Please purchase a plan."
+            
+            if active_sub.scans_remaining > 0:
+                return True, "OK"
+            else:
+                return False, "Premium plan used fully. Please purchase another scan."
+            
         
-        elif user.subscription_type in ['premium', 'unlimited']:
-            # Premium/Unlimited: check if subscription is active (not expired)
+        elif user.subscription_type == 'unlimited':
+            # Unlimited: check if subscription is active (not expired)
             if user.is_subscription_active:
                 return True, "OK"
             else:
@@ -51,7 +67,6 @@ class WatchAnalysisService:
     
     @staticmethod
     def create_analysis(user, front_img, back_img, bracelet_img):
-        """Create new watch analysis"""
         can_analyze, message = WatchAnalysisService.can_user_analyze(user)
         
         if not can_analyze:
@@ -80,9 +95,23 @@ class WatchAnalysisService:
                 if active_sub and active_sub.scans_remaining > 0:
                     active_sub.scans_remaining -= 1
                     active_sub.save()
-                    
-            elif user.subscription_type in ['premium', 'unlimited']:
-                # Premium/Unlimited: No decrement needed - unlimited scans
+                    user.decrement_scans()  # Also decrement free scans if any
+                    user.save()
+
+            elif user.subscription_type == 'premium':
+                # Premium users: decrement from subscription's scans_remaining
+                active_sub = Subscription.objects.filter(
+                    user=user,
+                    status='active'
+                ).first()
+                if active_sub and active_sub.scans_remaining > 0:
+                    active_sub.scans_remaining -= 1
+                    active_sub.save()
+                    user.decrement_scans()  # Also decrement free scans if any
+                    user.save()
+
+            elif user.subscription_type == 'unlimited':
+                # Unlimited users: No decrement needed - unlimited scans
                 # Just verify subscription is active (already checked in can_user_analyze)
                 pass
             

@@ -8,6 +8,7 @@ from .serializers import *
 from .services import *
 from .models import *
 from .tasks import process_watch_analysis
+from .services.feature_service import FeatureService
 # Create your views here.
 
 
@@ -113,33 +114,43 @@ class WatchAnalysisAPIView(APIView):
 
 
 class WatchAnalysisReportAPIView(APIView):
+    """Get analysis report filtered by user's plan features"""
     permission_classes = [IsAuthenticated]
-
+    
     def get(self, request, pk):
         analysis = get_object_or_404(
             WatchAnalysis,
-            pk=pk,
+            id=pk,
             user=request.user
         )
-
-        if analysis.status != 'completed':
-            return Response(
-                {
-                    'success': False,
-                    'status': analysis.status,
-                    'message': 'Analysis not completed yet'
-                },
-                status=status.HTTP_200_OK
-            )
-
-        serializer = WatchAnalysisSerializer(analysis)
-        return Response(
-            {
-                "success": True,
-                "data": serializer.data
-            },
-            status=status.HTTP_200_OK
-        )
+        
+        # Check status
+        if analysis.status in ['pending', 'processing']:
+            return Response({
+                'status': analysis.status,
+                'message': f'Analysis is {analysis.status}. Please check back shortly.'
+            })
+        
+        if analysis.status == 'failed':
+            return Response({
+                'status': 'failed',
+                'error': analysis.error_message
+            })
+        
+        # Get user's plan
+        user_plan = FeatureService.get_user_plan(request.user)
+        
+        # Get filtered report data based on plan
+        report_data = FeatureService.get_report_data(analysis, user_plan)
+        
+        # Add images
+        report_data['images'] = {
+            'front': request.build_absolute_uri(analysis.front_image.url) if analysis.front_image else None,
+            'back': request.build_absolute_uri(analysis.back_image.url) if analysis.back_image else None,
+            'bracelet': request.build_absolute_uri(analysis.bracelet_image.url) if analysis.bracelet_image else None,
+        }
+        
+        return Response(report_data)
 
 
 class WatchAnalysisStatusAPIView(APIView):

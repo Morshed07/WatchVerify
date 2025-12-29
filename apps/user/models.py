@@ -127,6 +127,22 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
             self.free_scans_remaining -= 1
             self.save(update_fields=['free_scans_remaining'])
 
+    def decrement_scans(self):
+        if self.subscription_type == 'pay_per_scan' or self.subscription_type == 'premium' and self.free_scans_remaining > 0:
+            self.free_scans_remaining -= 1
+            self.save(update_fields=['free_scans_remaining'])
+    
+    def update_premium_status(self):
+        """Check subscription end date and update is_premium accordingly"""
+        if self.subscription_end_date and timezone.now() > self.subscription_end_date:
+            self.is_premium = False
+        return self.is_premium
+    
+    def save(self, *args, **kwargs):
+        """Override save to automatically update is_premium based on subscription end date"""
+        self.update_premium_status()
+        super().save(*args, **kwargs)
+
 
 class OtpLog(BaseModel):
     user = models.ForeignKey(
