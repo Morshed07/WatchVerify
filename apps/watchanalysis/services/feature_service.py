@@ -106,14 +106,26 @@ class FeatureService:
             report_data['report_id'] = details.get('report', {}).get('report_id', f'AWC-{analysis.id}')
             report_data['date_of_issue'] = details.get('report', {}).get('date_of_issue', '')
         
-        # Price estimation (Unlimited only)
         if user_plan.includes_price_estimation:
-            report_data['price_estimation'] = {
-                'estimated_value': None,  # TODO: Implement
-                'currency': 'USD',
-                'confidence': None,
-                'message': 'Price estimation available for this watch'
-            }
+            price_data = details.get('price_estimation')
+
+            if price_data:
+                report_data['price_estimation'] = {
+                    'estimated_price': price_data.get('estimated_price'),
+                    'currency': price_data.get('currency', 'USD'),
+                    'condition_assumed': price_data.get('condition_assumed'),
+                    'confidence_level': price_data.get('confidence_level'),
+                    'notes': price_data.get('notes'),
+                }
+            else:
+                # Safety fallback (AI failed or old data)
+                report_data['price_estimation'] = {
+                    'estimated_price': 'Unavailable',
+                    'currency': 'USD',
+                    'condition_assumed': None,
+                    'confidence_level': 'Low',
+                    'notes': 'Price estimation not available for this analysis.'
+                }
         
         # PDF export info
         if user_plan.can_download_pdf:

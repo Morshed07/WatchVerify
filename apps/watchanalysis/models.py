@@ -61,8 +61,7 @@ class WatchAnalysis(BaseModel):
     processing_time = models.FloatField(null=True, blank=True, help_text="Time in seconds")
     error_message = models.TextField(blank=True)
 
-    estimated_price_min = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
-    estimated_price_max = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    estimated_price = models.CharField(max_length=50, blank=True, null=True)
     
     completed_at = models.DateTimeField(null=True, blank=True)
     

@@ -155,7 +155,9 @@ class WatchAnalysisService:
             watch_info = ai_result.get('watch_information', {})
             conclusion = ai_result.get('conclusion', {})
             detailed_analysis = ai_result.get('detailed_analysis', [])
-            
+            price_estimation = ai_result.get("price_estimation", {})
+
+
             # DEBUG: Log extracted data
             logger.info(f"Watch Info: {watch_info}")
             logger.info(f"Conclusion: {conclusion}")
@@ -175,7 +177,7 @@ class WatchAnalysisService:
                 authenticity_level = 'similar'
             else:
                 authenticity_level = 'inconclusive'
-            
+          
             # Calculate processing time
             processing_time = time.time() - start_time
             
@@ -217,7 +219,16 @@ class WatchAnalysisService:
                     'authenticity_level': authenticity_level,
                     'expert_note': conclusion.get('expert_note', ''),
                 },
-                
+                # -------------------------
+                # 💰 PRICE ESTIMATION (AI ONLY)
+                # -------------------------
+                "price_estimation": {
+                    "estimated_price": price_estimation.get("estimated_price", "Unavailable"),
+                    "currency": price_estimation.get("currency", "USD"),
+                    "condition_assumed": price_estimation.get("condition_assumed"),
+                    "confidence_level": price_estimation.get("confidence_level"),
+                    "notes": price_estimation.get("notes"),
+                },
                 # Component Scores Summary (for quick access)
                 'component_scores': {
                     component['component']: component.get('match_score', '')
@@ -247,6 +258,7 @@ class WatchAnalysisService:
             analysis.analysis_details = comprehensive_details  # Store enhanced comprehensive data
             analysis.status = 'completed'
             analysis.processing_time = processing_time
+            analysis.estimated_price = price_estimation.get("estimated_price", "Unavailable")
             analysis.completed_at = timezone.now()
             
             # Save with explicit update_fields to ensure JSON is saved
@@ -258,7 +270,8 @@ class WatchAnalysisService:
                 'analysis_details',
                 'status',
                 'processing_time',
-                'completed_at'
+                'completed_at',
+                'estimated_price',
             ])
             
             # Verify save

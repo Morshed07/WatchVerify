@@ -100,6 +100,13 @@ Return ONLY a JSON object with this exact structure:
     "overall_authenticity_score": "XX%",
     "verdict": "Authentic/Counterfeit/Uncertain",
     "expert_note": ""
+  },
+  "price_estimation": {
+    "estimated_price": "<GENERATED_BY_AI>",
+    "currency": "USD",
+    "condition_assumed": "Excellent | Good | Fair",
+    "confidence_level": "High | Medium | Low",
+    "notes": "Explain how you arrived at this price"
   }
 }
 

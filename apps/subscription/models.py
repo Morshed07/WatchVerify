@@ -126,7 +126,10 @@ class SubscriptionPlan(BaseModel):
         verbose_name_plural = "Subscription Plans"
     
     def __str__(self):
-        return f"{self.name} (${self.price})"
+        return f"{self.name} (${self.price})-{self.get_category_display()}"
+    
+    def get_category_display_name(self):
+        return dict(self.PLAN_CATEGORIES).get(self.category, "Unknown")
     
     def get_feature_summary(self):
         """Get human-readable feature list"""
