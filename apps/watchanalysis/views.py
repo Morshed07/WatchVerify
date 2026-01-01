@@ -4,9 +4,9 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
-from .serializers import *
-from .services import *
-from .models import *
+from .serializers import WatchAnalysisSerializer
+from .services.watch_analysis_service import WatchAnalysisService
+from .models import WatchAnalysis
 from .tasks import process_watch_analysis
 from .services.feature_service import FeatureService
 # Create your views here.
@@ -68,15 +68,7 @@ class WatchAnalysisAPIView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        """
-        Create new watch analysis
-
-        FormData:
-            - front_image: file
-            - back_image: file
-            - bracelet_image: file
-        """
-
+        
         required_images = ['front_image', 'back_image', 'bracelet_image']
         missing_images = [img for img in required_images if img not in request.FILES]
 

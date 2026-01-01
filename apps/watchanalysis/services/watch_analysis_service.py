@@ -52,8 +52,7 @@ class WatchAnalysisService:
                 return True, "OK"
             else:
                 return False, "Premium plan used fully. Please purchase another scan."
-            
-        
+             
         elif user.subscription_type == 'unlimited':
             # Unlimited: check if subscription is active (not expired)
             if user.is_subscription_active:
