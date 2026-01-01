@@ -51,21 +51,24 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 
-    ###### third party apps ######
+    # ============================
+    # 3rd Party Apps
+    # ============================
     'rest_framework',
     'rest_framework_simplejwt',
     "corsheaders",
     'django_celery_results',
     'django_celery_beat',
-    ##############################
 
-    ##### manual apps #####
+
+    # ============================
+    # Mannual apps
+    # ============================
     'apps.user',
     'apps.core',
     'apps.subscription',
     'apps.payment',
     'apps.watchanalysis',
-    ########################
 ]
 
 MIDDLEWARE = [
@@ -132,6 +135,15 @@ CELERY_TIMEZONE = "UTC"
 CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 30 * 60  # 30 minutes
 
+CELERY_RESULT_BACKEND = "django-db"
+
+CELERY_BEAT_SCHEDULE = {
+    'cleanup-task': {
+        'task': 'celery.backend_cleanup',
+        'schedule': crontab(hour=4, minute=0),
+    },
+}
+
 
 SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
@@ -161,34 +173,16 @@ GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET")
 
 FIREBASE_SERVICE_ACCOUNT_FILE = BASE_DIR / "firebase" / "serviceAccountKey.json"
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:8000",
-    "http://127.0.0.1:5500",
-    "http://127.0.0.1:5500",
-    "http://127.0.0.1:5500"
-]
+CORS_ALLOWED_ORIGINS = env(
+    "CORS_ALLOWED_ORIGINS",
+    default="http://localhost:8000,http://127.0.0.1:5500,https://rihanna-preacquisitive-eleanore.ngrok-free.dev"
+).split(",")
 
-CORS_ALLOW_METHODS = (
-    "DELETE",
-    "GET",
-    "OPTIONS",
-    "PATCH",
-    "POST",
-    "PUT",
-)
+CSRF_TRUSTED_ORIGINS = env(
+    "CSRF_TRUSTED_ORIGINS",
+    default="https://*.ngrok-free.dev,https://rihanna-preacquisitive-eleanore.ngrok-free.dev"
+).split(",")
 
-CORS_ALLOW_HEADERS = (
-    "accept",
-    "authorization",
-    "content-type",
-    "user-agent",
-    "x-csrftoken",
-    "x-requested-with",
-)
-
-CSRF_TRUSTED_ORIGINS = [
-    "https://read-and-write.example.com",
-]
 #################################
 
 
@@ -249,8 +243,6 @@ MEDIA_ROOT = BASE_DIR / 'media'
 AUTH_USER_MODEL = 'user.User'
 
 AUTHENTICATION_BACKENDS = (
-    'social_core.backends.google.GoogleOAuth2',
-    'social_core.backends.facebook.FacebookOAuth2',
     'django.contrib.auth.backends.ModelBackend',
 )
 
@@ -270,14 +262,5 @@ LOGGING = {
     'root': {
         'handlers': ['console'],
         'level': 'INFO',
-    },
-}
-
-CELERY_RESULT_BACKEND = "django-db"
-
-CELERY_BEAT_SCHEDULE = {
-    'cleanup-task': {
-        'task': 'celery.backend_cleanup',
-        'schedule': crontab(hour=4, minute=0),
     },
 }
