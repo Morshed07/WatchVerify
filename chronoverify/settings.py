@@ -61,9 +61,9 @@ INSTALLED_APPS = [
     'django_celery_beat',
 
 
-    # ============================
-    # Mannual apps
-    # ============================
+    # ==================
+    # Manual apps
+    # ==================
     'apps.user',
     'apps.core',
     'apps.subscription',
