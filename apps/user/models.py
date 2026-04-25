@@ -45,6 +45,10 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
         ('premium', 'Premium'),
         ('unlimited', 'Unlimited'),
     ]
+    Language = [
+        ('english', 'English'),
+        ('french', 'French')
+    ]
     email = models.EmailField(unique=True, max_length=255)
     first_name = models.CharField(
         max_length=30,
@@ -56,6 +60,11 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
         blank=True,
         null=True
     )
+    language_preference = models.CharField(
+        max_length=10,
+        choices=Language,
+        default='english'
+    )
     subscription_type = models.CharField(
         max_length=20, 
         choices=SUBSCRIPTION_TYPES,
@@ -66,11 +75,7 @@ class User(BaseModel, AbstractBaseUser, PermissionsMixin):
     free_scans_remaining = models.IntegerField(default=3)
     total_scans_used = models.IntegerField(default=0)
     is_premium = models.BooleanField(default=False)
-    stripe_customer_id = models.CharField(
-        max_length=255,
-        blank=True,
-        null=True
-    )
+    terms_and_conditions_accepted = models.BooleanField(default=False)
 
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

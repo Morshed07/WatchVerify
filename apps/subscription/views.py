@@ -4,16 +4,28 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from .models import *
-from .serializers import *
-from .services import *
+from .models import (
+    SubscriptionPlan,
+    Subscription
+)
+from .serializers import (
+    SubscriptionPlanSerializer,
+    SubscriptionSerializer
+)
+from .services import (
+    SubscriptionService
+)
 
 
 class SubscriptionPlanApiView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        queryset = SubscriptionPlan.objects.filter(is_active=True)
+        if request.user.language_preference == 'english':
+            queryset = SubscriptionPlan.objects.filter(is_active=True, language='en')
+        else:
+            queryset = SubscriptionPlan.objects.filter(is_active=True, language='fr')
+
         serializer = SubscriptionPlanSerializer(queryset, many=True)
 
         return Response(

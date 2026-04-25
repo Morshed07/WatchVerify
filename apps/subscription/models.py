@@ -25,6 +25,16 @@ class SubscriptionPlan(BaseModel):
         ('unlimited', 'Premium Unlimited'),
     ]
     
+    LANGUAGE_CHOICES = [
+        ('en', 'English'),
+        ('fr', 'French'),
+    ]
+    language = models.CharField(
+        max_length=5,
+        choices=LANGUAGE_CHOICES,
+        default='en',
+        help_text="Language for this plan"
+    )
     # Basic Info
     name = models.CharField(max_length=100, help_text="Display name (e.g., 'Standard Analysis')")
     category = models.CharField(max_length=20, choices=PLAN_CATEGORIES)
@@ -121,6 +131,8 @@ class SubscriptionPlan(BaseModel):
     )
     
     class Meta:
+        unique_together = ("name", "language", "category")
+
         ordering = ['category', 'sort_order', 'price']
         verbose_name = "Subscription Plan"
         verbose_name_plural = "Subscription Plans"
@@ -224,7 +236,7 @@ class Subscription(BaseModel):
         self.scans_remaining = self.plan.scans_included
         
         # Update user subscription info
-        self.user.subscription_type = self.plan.plan_type
+        self.user.subscription_type = self.plan.analysis_type
         self.user.subscription_start_date = self.start_date
         self.user.subscription_end_date = self.end_date
         self.user.is_premium = True

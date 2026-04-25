@@ -1,0 +1,8 @@
+version: "2"
+tunnels:
+  project_8005:
+    addr: 8005
+    proto: http
+  project_8002:
+    addr: 8002
+    proto: http

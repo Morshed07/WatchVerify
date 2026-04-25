@@ -1,0 +1,157 @@
+{% extends "admin/change_list.html" %}
+{% load admin_urls static %}
+
+{% block title %}Reports Metrics - Django Admin{% endblock %}
+
+{% block content_title %}Reports Metrics Dashboard{% endblock %}
+
+{% block search %}{% endblock %}
+
+{% block date_hierarchy %}{% endblock %}
+
+{% block filters %}{% endblock %}
+
+{% block result_list %}
+<div class="metrics-dashboard">
+    <style>
+        .metrics-dashboard {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #417690;
+        }
+        .metric-card h3 {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .metric-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+        }
+        .metric-subtext {
+            color: #999;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        .breakdown-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .breakdown-table th {
+            background: #f0f0f0;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+            border-bottom: 2px solid #ddd;
+        }
+        .breakdown-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .breakdown-table tr:hover {
+            background: #f9f9f9;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        .progress-fill {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 12px;
+        }
+        .free-fill {
+            background: linear-gradient(90deg, #6c757d, #5a6268);
+        }
+        .premium-fill {
+            background: linear-gradient(90deg, #28a745, #20c997);
+        }
+    </style>
+
+    <h2>Reports Metrics</h2>
+    
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h3>Total Reports Generated</h3>
+            <div class="metric-value">{{ metrics.total_reports }}</div>
+            <div class="metric-subtext">All time</div>
+        </div>
+
+        <div class="metric-card">
+            <h3>Free User Reports</h3>
+            <div class="metric-value">{{ metrics.reports_free_users }}</div>
+            <div class="metric-subtext">{{ metrics.free_percentage }}</div>
+        </div>
+
+        <div class="metric-card">
+            <h3>Premium User Reports</h3>
+            <div class="metric-value">{{ metrics.reports_premium_users }}</div>
+            <div class="metric-subtext">{{ metrics.premium_percentage }}</div>
+        </div>
+    </div>
+
+    <h3 style="margin-top: 40px; color: #000000;">Report Distribution</h3>
+    <table class="breakdown-table">
+        <thead>
+            <tr>
+                <th>User Type</th>
+                <th>Reports Count</th>
+                <th>Percentage</th>
+                <th>Visual</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Free Users</strong></td>
+                <td>{{ metrics.reports_free_users }}</td>
+                <td>{{ metrics.free_percentage }}</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill free-fill" style="width: {{ metrics.free_percentage }};"></div>
+                    </div>
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Premium Users</strong></td>
+                <td>{{ metrics.reports_premium_users }}</td>
+                <td>{{ metrics.premium_percentage }}</td>
+                <td>
+                    <div class="progress-bar">
+                        <div class="progress-fill premium-fill" style="width: {{ metrics.premium_percentage }};"></div>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

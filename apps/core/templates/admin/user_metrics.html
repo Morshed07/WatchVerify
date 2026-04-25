@@ -1,0 +1,95 @@
+{% extends "admin/change_list.html" %}
+{% load admin_urls static %}
+
+{% block title %}User Metrics - Django Admin{% endblock %}
+
+{% block content_title %}User Metrics Dashboard{% endblock %}
+
+{% block search %}{% endblock %}
+
+{% block date_hierarchy %}{% endblock %}
+
+{% block filters %}{% endblock %}
+
+{% block result_list %}
+<div class="metrics-dashboard">
+    <style>
+        .metrics-dashboard {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #417690;
+        }
+        .metric-card h3 {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .metric-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+        }
+        .metric-subtext {
+            color: #999;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+    </style>
+
+    <h2>User Metrics</h2>
+    
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h3>Total Registered Users</h3>
+            <div class="metric-value">{{ metrics.total_users }}</div>
+            <div class="metric-subtext">All time</div>
+        </div>
+
+        <div class="metric-card">
+            <h3>Active Users (Daily)</h3>
+            <div class="metric-value">{{ metrics.active_users_daily }}</div>
+            <div class="metric-subtext">Last 24 hours</div>
+        </div>
+
+        <div class="metric-card">
+            <h3>Active Users (Monthly)</h3>
+            <div class="metric-value">{{ metrics.active_users_monthly }}</div>
+            <div class="metric-subtext">Last 30 days</div>
+        </div>
+
+        <div class="metric-card">
+            <h3>Free Users</h3>
+            <div class="metric-value">{{ metrics.free_users }}</div>
+            <div class="metric-subtext">Free tier</div>
+        </div>
+
+        <div class="metric-card">
+            <h3>Premium Users</h3>
+            <div class="metric-value">{{ metrics.premium_users }}</div>
+            <div class="metric-subtext">Paid subscriptions</div>
+        </div>
+
+        <div class="metric-card">
+            <h3>Conversion Rate</h3>
+            <div class="metric-value">{{ metrics.conversion_rate }}</div>
+            <div class="metric-subtext">Free to Premium</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

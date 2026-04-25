@@ -1,0 +1,120 @@
+{% extends "admin/change_list.html" %}
+{% load admin_urls static %}
+
+{% block title %}AI & Cost Monitoring - Django Admin{% endblock %}
+
+{% block content_title %}AI & Cost Monitoring Dashboard{% endblock %}
+
+{% block search %}{% endblock %}
+
+{% block date_hierarchy %}{% endblock %}
+
+{% block filters %}{% endblock %}
+
+{% block result_list %}
+<div class="metrics-dashboard">
+    <style>
+        .metrics-dashboard {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #417690;
+        }
+        .metric-card.alert {
+            border-left-color: #dc3545;
+        }
+        .metric-card h3 {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .metric-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+        }
+        .metric-subtext {
+            color: #999;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        .alert-badge {
+            display: inline-block;
+            background: #dc3545;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .safe-badge {
+            display: inline-block;
+            background: #28a745;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+
+    <h2>AI & Cost Monitoring</h2>
+    
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h3>AI Calls Today</h3>
+            <div class="metric-value">{{ metrics.ai_calls_today }}</div>
+            <div class="metric-subtext">Current day</div>
+        </div>
+
+        <div class="metric-card">
+            <h3>AI Calls (Monthly)</h3>
+            <div class="metric-value">{{ metrics.ai_calls_monthly }}</div>
+            <div class="metric-subtext">Last 30 days</div>
+        </div>
+
+        <div class="metric-card">
+            <h3>Estimated Daily Cost</h3>
+            <div class="metric-value">{{ metrics.estimated_daily_cost }}</div>
+            <div class="metric-subtext">$0.01 per call</div>
+        </div>
+
+        <div class="metric-card">
+            <h3>Estimated Monthly Cost</h3>
+            <div class="metric-value">{{ metrics.estimated_monthly_cost }}</div>
+            <div class="metric-subtext">Last 30 days</div>
+        </div>
+
+        <div class="metric-card {% if metrics.ai_cost_alert %}alert{% endif %}">
+            <h3>AI Cost as % of Revenue</h3>
+            <div class="metric-value">{{ metrics.ai_cost_percentage }}</div>
+            {% if metrics.ai_cost_alert %}
+                <div class="alert-badge">⚠️ ALERT: &gt;30%</div>
+            {% else %}
+                <div class="safe-badge">✓ Normal Range</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div style="margin-top: 30px; padding: 15px; background: #fff3cd; border-left: 4px solid #ffc107; border-radius: 4px; color: #dc3545">
+        <strong>Status:</strong> {{ metrics.alert_message }}
+    </div>
+</div>
+{% endblock %}

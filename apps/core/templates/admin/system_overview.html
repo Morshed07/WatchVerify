@@ -1,0 +1,196 @@
+{% extends "admin/change_list.html" %}
+{% load admin_urls static %}
+
+{% block title %}System Overview - Django Admin{% endblock %}
+
+{% block content_title %}System Overview Dashboard{% endblock %}
+
+{% block search %}{% endblock %}
+
+{% block date_hierarchy %}{% endblock %}
+
+{% block filters %}{% endblock %}
+
+{% block result_list %}
+<div class="metrics-dashboard">
+    <style>
+        .metrics-dashboard {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #417690;
+        }
+        .metric-card h3 {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .metric-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+        }
+        .metric-subtext {
+            color: #999;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+        .status-operational {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status-degraded {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+        }
+        .status-critical {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .stats-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stats-table th {
+            background: #f0f0f0;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+            border-bottom: 2px solid #ddd;
+        }
+        .stats-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+        }
+        .stats-table tr:hover {
+            background: #f9f9f9;
+        }
+    </style>
+
+    <h2>System Overview</h2>
+    
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h3>Total Analyses</h3>
+            <div class="metric-value">{{ metrics.total_analyses }}</div>
+            <div class="metric-subtext">All time</div>
+        </div>
+
+        <div class="metric-card">
+            <h3>Successful Analyses</h3>
+            <div class="metric-value">{{ metrics.successful_analyses }}</div>
+            <div class="metric-subtext">Completed</div>
+        </div>
+
+        <div class="metric-card">
+            <h3>Failed Analyses</h3>
+            <div class="metric-value">{{ metrics.failed_analyses }}</div>
+            <div class="metric-subtext">Errors</div>
+        </div>
+
+        <div class="metric-card">
+            <h3>Pending Analyses</h3>
+            <div class="metric-value">{{ metrics.pending_analyses }}</div>
+            <div class="metric-subtext">In progress</div>
+        </div>
+
+        <div class="metric-card">
+            <h3>Success Rate</h3>
+            <div class="metric-value">{{ metrics.success_rate }}</div>
+            <div class="metric-subtext">Success percentage</div>
+        </div>
+
+        <div class="metric-card">
+            <h3>System Status</h3>
+            <div style="margin-top: 15px;">
+                <div class="status-badge {% if metrics.system_status == 'Operational' %}status-operational{% elif metrics.system_status == 'Degraded' %}status-degraded{% else %}status-critical{% endif %}">
+                    {{ metrics.system_status }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h3 style="margin-top: 40px;">Health Indicators</h3>
+    <table class="stats-table">
+        <thead>
+            <tr>
+                <th>Metric</th>
+                <th>Value</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Success Rate Threshold</strong></td>
+                <td>{{ metrics.success_rate }}</td>
+                <td>
+                    {% if metrics.success_rate|floatformat:0 >= 95 %}
+                        <span style="color: #28a745; font-weight: bold;">✓ Excellent</span>
+                    {% elif metrics.success_rate|floatformat:0 >= 80 %}
+                        <span style="color: #ffc107; font-weight: bold;">⚠ Warning</span>
+                    {% else %}
+                        <span style="color: #dc3545; font-weight: bold;">✗ Critical</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><strong>System Operations</strong></td>
+                <td>{{ metrics.system_status }}</td>
+                <td>
+                    {% if metrics.system_status == 'Operational' %}
+                        <span style="color: #28a745; font-weight: bold;">✓ Running Normally</span>
+                    {% elif metrics.system_status == 'Degraded' %}
+                        <span style="color: #ffc107; font-weight: bold;">⚠ Performance Issues</span>
+                    {% else %}
+                        <span style="color: #dc3545; font-weight: bold;">✗ Critical Issues</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td><strong>Error Rate</strong></td>
+                <td>{{ metrics.error_rate }}</td>
+                <td>
+                    {% if metrics.error_rate_numeric < 5 %}
+                        <span style="color: #28a745; font-weight: bold;">✓ Low</span>
+                    {% elif metrics.error_rate_numeric < 10 %}
+                        <span style="color: #ffc107; font-weight: bold;">⚠ Moderate</span>
+                    {% else %}
+                        <span style="color: #dc3545; font-weight: bold;">✗ High</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endblock %}

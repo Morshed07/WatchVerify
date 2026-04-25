@@ -1,0 +1,95 @@
+{% extends "admin/change_list.html" %}
+{% load admin_urls static %}
+
+{% block title %}Analysis Metrics - Django Admin{% endblock %}
+
+{% block content_title %}Analysis Usage Metrics Dashboard{% endblock %}
+
+{% block search %}{% endblock %}
+
+{% block date_hierarchy %}{% endblock %}
+
+{% block filters %}{% endblock %}
+
+{% block result_list %}
+<div class="metrics-dashboard">
+    <style>
+        .metrics-dashboard {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .metric-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            border-left: 4px solid #417690;
+        }
+        .metric-card h3 {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .metric-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+        }
+        .metric-subtext {
+            color: #999;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+    </style>
+
+    <h2>Analysis Usage Metrics</h2>
+    
+    <div class="metrics-grid">
+        <div class="metric-card">
+            <h3>Total Analyses Performed</h3>
+            <div class="metric-value">{{ metrics.total_analyses }}</div>
+            <div class="metric-subtext">All time</div>
+        </div>
+
+        <div class="metric-card">
+            <h3>Analyses Today</h3>
+            <div class="metric-value">{{ metrics.analyses_today }}</div>
+            <div class="metric-subtext">Last 24 hours</div>
+        </div>
+
+        <div class="metric-card">
+            <h3>Analyses This Month</h3>
+            <div class="metric-value">{{ metrics.analyses_monthly }}</div>
+            <div class="metric-subtext">Last 30 days</div>
+        </div>
+
+        <div class="metric-card">
+            <h3>Free Tier Analyses</h3>
+            <div class="metric-value">{{ metrics.free_analyses }}</div>
+            <div class="metric-subtext">Free users</div>
+        </div>
+
+        <div class="metric-card">
+            <h3>Premium Analyses</h3>
+            <div class="metric-value">{{ metrics.premium_analyses }}</div>
+            <div class="metric-subtext">Premium users</div>
+        </div>
+
+        <div class="metric-card">
+            <h3>Avg Analyses per User</h3>
+            <div class="metric-value">{{ metrics.avg_analyses_per_user }}</div>
+            <div class="metric-subtext">Per user average</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

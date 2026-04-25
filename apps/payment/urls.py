@@ -1,8 +1,11 @@
 from django.urls import path
 from .views import *
+from .webhook import RevenueCatWebhookView
 
 urlpatterns = [
-    path('purchases/verify-google/', VerifyGooglePurchaseAPIView.as_view(), name='verify-google-purchase'),
-    path('purchases/verify-apple/', VerifyApplePurchaseAPIView.as_view(), name='verify-apple-purchase'),
     path('purchases/history/', PurchaseHistoryAPIView.as_view(), name='purchase-history'),
+
+    # RevenueCat endpoints
+    path('purchases/revenuecat-verify/', RevenueCatVerifyPurchaseAPIView.as_view(), name='revenuecat-verify-purchase'),
+    path('webhooks/revenuecat/', RevenueCatWebhookView.as_view(), name='revenuecat-webhook'),
 ]

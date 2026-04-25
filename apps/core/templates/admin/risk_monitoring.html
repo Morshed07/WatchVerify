@@ -1,0 +1,213 @@
+{% extends "admin/change_list.html" %}
+{% load admin_urls static %}
+
+{% block title %}Risk Monitoring & Alerts - Django Admin{% endblock %}
+
+{% block content_title %}Visual Alerts & Risk Monitoring{% endblock %}
+
+{% block search %}{% endblock %}
+
+{% block date_hierarchy %}{% endblock %}
+
+{% block filters %}{% endblock %}
+
+{% block result_list %}
+<div class="metrics-dashboard">
+    <style>
+        .metrics-dashboard {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .alert-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .alert-count {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .alert-count-value {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        .alert-count-label {
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .critical {
+            border-left: 4px solid #dc3545;
+        }
+        .critical .alert-count-value {
+            color: #dc3545;
+        }
+        .warning {
+            border-left: 4px solid #ffc107;
+        }
+        .warning .alert-count-value {
+            color: #ffc107;
+        }
+        .info {
+            border-left: 4px solid #17a2b8;
+        }
+        .info .alert-count-value {
+            color: #17a2b8;
+        }
+        .alerts-container {
+            margin-top: 30px;
+        }
+        .alert-item {
+            background: white;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 4px solid;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .alert-critical {
+            border-left-color: #dc3545;
+            background: #ffe8e8;
+        }
+        .alert-warning {
+            border-left-color: #ffc107;
+            background: #fffbea;
+        }
+        .alert-info {
+            border-left-color: #17a2b8;
+            background: #e8f4f8;
+        }
+        .alert-type {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 11px;
+            margin-bottom: 8px;
+        }
+        .alert-type-critical {
+            background: #dc3545;
+            color: white;
+        }
+        .alert-type-warning {
+            background: #ffc107;
+            color: #333;
+        }
+        .alert-type-info {
+            background: #17a2b8;
+            color: white;
+        }
+        .alert-message {
+            font-weight: bold;
+            color: #333;
+            margin: 8px 0;
+        }
+        .alert-value {
+            color: #666;
+            font-size: 13px;
+        }
+        .no-alerts {
+            background: #d4edda;
+            border-left: 4px solid #28a745;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            color: #155724;
+        }
+        .metrics-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+        }
+        .metric-box {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .metric-box h4 {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 12px;
+            text-transform: uppercase;
+        }
+        .metric-box-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+    </style>
+
+    <h2>Visual Alerts & Risk Monitoring</h2>
+
+    <div class="alert-summary">
+        <div class="alert-count critical">
+            <div class="alert-count-label">Critical Alerts</div>
+            <div class="alert-count-value">{{ alerts.critical_alerts }}</div>
+        </div>
+        <div class="alert-count warning">
+            <div class="alert-count-label">Warning Alerts</div>
+            <div class="alert-count-value">{{ alerts.warning_alerts }}</div>
+        </div>
+        <div class="alert-count info">
+            <div class="alert-count-label">Info Alerts</div>
+            <div class="alert-count-value">{{ alerts.info_alerts }}</div>
+        </div>
+        <div class="alert-count">
+            <div class="alert-count-label">Total Alerts</div>
+            <div class="alert-count-value">{{ alerts.total_alerts }}</div>
+        </div>
+    </div>
+
+    <div class="metrics-row">
+        <div class="metric-box">
+            <h4>Premium Conversion Rate</h4>
+            <div class="metric-box-value">{{ alerts.conversion_rate }}</div>
+            <small style="color: #999;">Current rate</small>
+        </div>
+        <div class="metric-box">
+            <h4>AI Cost as % of Revenue</h4>
+            <div class="metric-box-value">{{ alerts.ai_cost_percentage }}</div>
+            <small style="color: #999;">Monthly tracking</small>
+        </div>
+    </div>
+
+    <h3 style="margin-top: 40px;">Active Alerts</h3>
+    <div class="alerts-container">
+        {% if alerts.alerts %}
+            {% for alert in alerts.alerts %}
+                <div class="alert-item alert-{{ alert.type|lower }}">
+                    <div>
+                        <span class="alert-type alert-type-{{ alert.type|lower }}">{{ alert.type }}</span>
+                    </div>
+                    <div class="alert-message">{{ alert.message }}</div>
+                    <div class="alert-value">{{ alert.value }}</div>
+                </div>
+            {% endfor %}
+        {% else %}
+            <div class="no-alerts">
+                ✓ All systems operating normally. No active alerts.
+            </div>
+        {% endif %}
+    </div>
+
+    <div style="margin-top: 40px; background: #f0f8ff; border-left: 4px solid #2196F3; padding: 20px; border-radius: 4px;">
+        <h4 style="margin: 0 0 10px 0; color: #1976D2;">Alert Thresholds</h4>
+        <ul style="margin: 0; padding-left: 20px; color: #555; line-height: 1.8;">
+            <li><strong>AI Costs Alert:</strong> Triggers when AI costs exceed 30% of total revenue</li>
+            <li><strong>Premium Conversion Alert:</strong> Triggers when conversion rate falls below 2%</li>
+            <li><strong>Abnormal Usage Alert:</strong> Triggers when a user exceeds 100 analyses</li>
+            <li><strong>Volume Spike Alert:</strong> Triggers when analysis volume increases 50%+ day-over-day</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

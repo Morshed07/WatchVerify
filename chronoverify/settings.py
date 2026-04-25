@@ -14,6 +14,10 @@ from pathlib import Path
 from datetime import timedelta
 import environ
 from celery.schedules import crontab
+from corsheaders.defaults import default_headers
+import firebase_admin
+from firebase_admin import credentials
+from django.urls import reverse_lazy
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -33,17 +37,29 @@ environ.Env.read_env(BASE_DIR / ".env")
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = env(
     "SECRET_KEY",
-    default="django-insecure-zu^y6i6873e9@+mteels#h)%deb+(4$n54#h5f%^i+2wld!%*3"
+    default="django-morshed-nayeem-secret-key"
 )
 
 DEBUG = env.bool("DEBUG", default=False)
 
 ALLOWED_HOSTS = env("ALLOWED_HOSTS", default="localhost").split(",")
 
+CSRF_TRUSTED_ORIGINS = env(
+    'CSRF_TRUSTED_ORIGINS',
+).split(',')
+
+CORS_ALLOWED_ORIGINS = env(
+    'CORS_ALLOWED_ORIGINS',
+).split(',')
+
+
+
 
 # Application definition
 
 INSTALLED_APPS = [
+    'apps.unfold_admin',
+    'unfold',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -69,6 +85,7 @@ INSTALLED_APPS = [
     'apps.subscription',
     'apps.payment',
     'apps.watchanalysis',
+
 ]
 
 MIDDLEWARE = [
@@ -102,11 +119,18 @@ TEMPLATES = [
 WSGI_APPLICATION = 'chronoverify.wsgi.application'
 
 
-######manually added settings######
+# ============================
+# REST FRAMEWORK CONFIGURATION
+# ============================
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
+    ),
+    "DEFAULT_PARSER_CLASSES": (
+        "rest_framework.parsers.MultiPartParser",
+        "rest_framework.parsers.FormParser",
+        "rest_framework.parsers.JSONParser",
     ),
     # "DEFAULT_PERMISSION_CLASSES": (
     #     "rest_framework.permissions.IsAuthenticated",
@@ -142,11 +166,19 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'celery.backend_cleanup',
         'schedule': crontab(hour=4, minute=0),
     },
+    'grant-free-scans': {
+        'task': 'apps.user.tasks.grant_free_scans_to_users_bulk',
+        'schedule': crontab(hour=0, minute=0),  # Run daily at midnight
+    },
+    'downgrade-expired-subscriptions': {
+        'task': 'apps.user.tasks.downgrade_expired_subscriptions',
+        'schedule': crontab(hour=1, minute=0),  # Run daily at 1 AM
+    },
 }
 
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+    'ACCESS_TOKEN_LIFETIME': timedelta(days=30),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
 }
 
@@ -171,17 +203,9 @@ DEFAULT_FROM_EMAIL = env(
 GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = env("GOOGLE_CLIENT_SECRET")
 
-FIREBASE_SERVICE_ACCOUNT_FILE = BASE_DIR / "firebase" / "serviceAccountKey.json"
+FIREBASE_SERVICE_ACCOUNT_FILE = str(BASE_DIR / "firebase" / "serviceAccountKey.json")
 
-CORS_ALLOWED_ORIGINS = env(
-    "CORS_ALLOWED_ORIGINS",
-    default="http://localhost:8000,http://127.0.0.1:5500,https://rihanna-preacquisitive-eleanore.ngrok-free.dev"
-).split(",")
 
-CSRF_TRUSTED_ORIGINS = env(
-    "CSRF_TRUSTED_ORIGINS",
-    default="https://*.ngrok-free.dev,https://rihanna-preacquisitive-eleanore.ngrok-free.dev"
-).split(",")
 
 #################################
 
@@ -221,7 +245,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Dhaka'
 
 USE_I18N = True
 
@@ -254,13 +278,172 @@ OPENAI_MODEL = env('OPENAI_MODEL')
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'console': {
             'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'apps.user.firebase': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'apps.user.serializers': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'apps.payment.revenuecat_service': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'apps.payment.webhook': {
+            'handlers': ['console'],
+            'level': 'INFO',
+            'propagate': False,
         },
     },
     'root': {
         'handlers': ['console'],
         'level': 'INFO',
     },
+}
+
+# ============================================================================
+# REVENUECAT CONFIGURATION
+# ============================================================================
+# Get these from your RevenueCat Project Settings
+REVENUECAT_API_KEY = env(
+    "REVENUECAT_API_KEY",
+    default=""
+)
+REVENUECAT_SECRET_KEY = env(
+    "REVENUECAT_SECRET_KEY",
+    default=""
+)
+
+# RevenueCat webhook signature verification secret
+# Used in webhook handler to validate incoming webhook requests
+
+
+# ===========================
+# Unfold Csonfiguration
+# ===========================
+
+
+UNFOLD = {
+    "SITE_TITLE": "ChronoVerify Admin",
+    "SITE_HEADER": "ChronoVerify",
+    "SITE_SUBHEADER": "Admin Dashboard",
+    # "SITE_LOGO": {
+    #     "light": lambda request: static("admin/react.svg"),  # Path to your file
+    #     "dark": lambda request: static("admin/react.svg"),   # Use same or different for dark mode
+    # },
+    "SITE_SYMBOL": "apartment",  # Use an icon name from Unfold's icon library
+    # Update this path to include the 'apps' prefix
+    "DASHBOARD_CALLBACK": "apps.unfold_admin.dashboard.dashboard_callback",
+    "DASHBOARD_TEMPLATE": "admin/dashboard.html",
+    
+    # Also update any other callbacks or links (Environment, Sidebar, etc.)
+    "ENVIRONMENT": "apps.unfold_admin.dashboard.environment_callback",
+    
+    "INDEX_VIEW": "apps.unfold_admin.views.CustomIndexView",
+    
+    "SIDEBAR": {
+        "show_search": True,
+        "show_all_applications": False,
+        "navigation": [
+            # --- ADDED THIS DASHBOARD SECTION ---
+            {
+                "title": "Navigation",
+                "separator": True,
+                "items": [
+                    {
+                        "title": "Dashboard",
+                        "icon": "dashboard", 
+                        "link": reverse_lazy("admin:index"),
+                    },
+                ],
+            },
+            # ------------------------------------
+            {
+                "title": "Account",
+                "separator": True,
+                "items": [
+                    {
+                        "title": "Users",
+                        "icon": "group", 
+                        "link": reverse_lazy("admin:user_user_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": "Subscriptions",
+                "separator": True,
+                "items": [
+                    {
+                        "title": "Subscription Plans",
+                        "icon": "loyalty",
+                        "link": reverse_lazy("admin:subscription_subscriptionplan_changelist"),
+                    },
+                    {
+                        "title": "Subscriptions",
+                        "icon": "card_membership",
+                        "link": reverse_lazy("admin:subscription_subscription_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": "Payments",
+                "separator": True,
+                "items": [
+                    {
+                        "title": "In-App Purchases",
+                        "icon": "payments",
+                        "link": reverse_lazy("admin:payment_inapppurchase_changelist"),
+                    },
+                ],
+            },
+            {
+                "title": "Watch Analysis",
+                "separator": True,
+                "items": [
+                    {
+                        "title": "Watch Analyses",
+                        "icon": "watch",
+                        "link": reverse_lazy("admin:watchanalysis_watchanalysis_changelist"),
+                    },
+                    {
+                        "title": "Usage Logs",
+                        "icon": "history",
+                        "link": reverse_lazy("admin:watchanalysis_usagelog_changelist"),
+                    },
+                ],
+            },
+        ],
+    },
+    "COLORS": {
+        "primary": {
+                "50": "255 247 237",
+                "100": "255 237 213",
+                "200": "254 215 170",
+                "300": "253 186 116",
+                "400": "251 146 60",
+                "500": "249 115 22",   # Base Orange
+                "600": "234 88 12",
+                "700": "194 65 12",
+                "800": "154 52 18",
+                "900": "124 45 18",
+                "950": "67 20 7",
+            },
+        },
 }

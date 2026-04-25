@@ -12,6 +12,25 @@ logger = logging.getLogger(__name__)
 
 class WatchAnalysisService:
     """Handle watch analysis logic"""
+
+    @staticmethod
+    def generate_report_id(user):
+        prefix = "AWC-TEST"
+
+        last_report = (
+            WatchAnalysis.objects
+            .filter(user=user, analysis_report_id__startswith=prefix)
+            .order_by("-created_at")
+            .first()
+        )
+
+        if last_report and last_report.analysis_report_id:
+            last_number = int(last_report.analysis_report_id.split("-")[-1])
+            next_number = last_number + 1
+        else:
+            next_number = 1
+
+        return f"{prefix}-{next_number:03d}"
     
     @staticmethod
     def can_user_analyze(user):
@@ -65,21 +84,28 @@ class WatchAnalysisService:
             return False, "Invalid subscription type. Please contact support."
     
     @staticmethod
-    def create_analysis(user, front_img, back_img, bracelet_img):
+    def create_analysis(user, front_img, back_img, bracelet_img, language="English", original_box=False, original_brand_certificate=False, invoice=False):
         can_analyze, message = WatchAnalysisService.can_user_analyze(user)
         
         if not can_analyze:
             raise PermissionError(message)
         
         with transaction.atomic():
+            report_id = WatchAnalysisService.generate_report_id(user)
+            
             analysis = WatchAnalysis.objects.create(
                 user=user,
+                analysis_report_id=report_id,
                 front_image=front_img,
                 back_image=back_img,
                 bracelet_image=bracelet_img,
+                language=language,
+                original_box=original_box,
+                original_brand_certificate=original_brand_certificate,
+                invoice=invoice,
                 status='pending'
             )
-            
+                        
             # Decrement scans based on subscription type
             if user.subscription_type == 'free':
                 # Free users: decrement from user's free_scans_remaining
@@ -144,7 +170,8 @@ class WatchAnalysisService:
             ai_result = ai_analyzer.analyze_watch(
                 front_image=analysis.front_image,
                 back_image=analysis.back_image,
-                bracelet_image=analysis.bracelet_image
+                bracelet_image=analysis.bracelet_image,
+                language=analysis.language  # <--- DON'T FORGET THIS
             )
             
             # DEBUG: Log the raw AI result
@@ -155,6 +182,22 @@ class WatchAnalysisService:
             conclusion = ai_result.get('conclusion', {})
             detailed_analysis = ai_result.get('detailed_analysis', [])
             price_estimation = ai_result.get("price_estimation", {})
+            
+            # Validate and clean price values
+            def clean_price(price_value):
+                """Convert price value to float, handling invalid inputs"""
+                if not price_value or price_value in ['N/A', 'XX', 'Unknown', 'Unavailable']:
+                    return None
+                try:
+                    # Remove common currency symbols and whitespace
+                    cleaned = str(price_value).strip().replace('$', '').replace('€', '').replace(',', '')
+                    return float(cleaned)
+                except (ValueError, TypeError):
+                    return None
+            
+            # Clean USD and EUR prices
+            price_estimation['estimated_price_usd'] = clean_price(price_estimation.get('estimated_price_usd'))
+            price_estimation['estimated_price_eur'] = clean_price(price_estimation.get('estimated_price_eur'))
 
 
             # DEBUG: Log extracted data
@@ -187,7 +230,8 @@ class WatchAnalysisService:
                 
                 # Report Metadata
                 'report': {
-                    'report_id': ai_result.get('report_id', f'AWC-{analysis.id}'),
+                    'report_id': analysis.analysis_report_id,
+                    'created_at': analysis.created_at.isoformat(),
                     'date_of_issue': ai_result.get('date_of_issue', ''),
                     'processing_time_seconds': processing_time,
                     'analyzed_at': timezone.now().isoformat(),
@@ -222,8 +266,10 @@ class WatchAnalysisService:
                 # 💰 PRICE ESTIMATION (AI ONLY)
                 # -------------------------
                 "price_estimation": {
-                    "estimated_price": price_estimation.get("estimated_price", "Unavailable"),
-                    "currency": price_estimation.get("currency", "USD"),
+                    "estimated_price_usd": price_estimation.get("estimated_price_usd") or "Unavailable",
+                    "estimated_price_eur": price_estimation.get("estimated_price_eur") or "Unavailable",
+                    "currency_usd": price_estimation.get("currency_usd", "USD"),
+                    "currency_eur": price_estimation.get("currency_eur", "EUR"),
                     "condition_assumed": price_estimation.get("condition_assumed"),
                     "confidence_level": price_estimation.get("confidence_level"),
                     "notes": price_estimation.get("notes"),
@@ -257,7 +303,9 @@ class WatchAnalysisService:
             analysis.analysis_details = comprehensive_details  # Store enhanced comprehensive data
             analysis.status = 'completed'
             analysis.processing_time = processing_time
-            analysis.estimated_price = price_estimation.get("estimated_price", "Unavailable")
+            # Store USD price as primary estimated_price
+            estimated_price_usd = price_estimation.get("estimated_price_usd")
+            analysis.estimated_price = estimated_price_usd if estimated_price_usd else "Unavailable"
             analysis.completed_at = timezone.now()
             
             # Save with explicit update_fields to ensure JSON is saved

@@ -33,6 +33,7 @@ class FeatureService:
         # Base data (everyone gets this)
         report_data = {
             'id': str(analysis.id),
+            'created_at': analysis.created_at,
             'status': analysis.status,
             'analyzed_at': analysis.completed_at,
             'processing_time': analysis.processing_time,
@@ -110,9 +111,21 @@ class FeatureService:
             price_data = details.get('price_estimation')
 
             if price_data:
+                # Format prices with currency symbols
+                usd_price = price_data.get('estimated_price_usd', 'Unavailable')
+                eur_price = price_data.get('estimated_price_eur', 'Unavailable')
+                
+                # Format prices if they are numbers
+                if isinstance(usd_price, (int, float)):
+                    usd_price = f"${usd_price:,.2f}"
+                if isinstance(eur_price, (int, float)):
+                    eur_price = f"€{eur_price:,.2f}"
+                
                 report_data['price_estimation'] = {
-                    'estimated_price': price_data.get('estimated_price'),
-                    'currency': price_data.get('currency', 'USD'),
+                    'estimated_price_usd': usd_price,
+                    'estimated_price_eur': eur_price,
+                    'currency_usd': price_data.get('currency_usd', 'USD'),
+                    'currency_eur': price_data.get('currency_eur', 'EUR'),
                     'condition_assumed': price_data.get('condition_assumed'),
                     'confidence_level': price_data.get('confidence_level'),
                     'notes': price_data.get('notes'),
@@ -120,8 +133,10 @@ class FeatureService:
             else:
                 # Safety fallback (AI failed or old data)
                 report_data['price_estimation'] = {
-                    'estimated_price': 'Unavailable',
-                    'currency': 'USD',
+                    'estimated_price_usd': 'Unavailable',
+                    'estimated_price_eur': 'Unavailable',
+                    'currency_usd': 'USD',
+                    'currency_eur': 'EUR',
                     'condition_assumed': None,
                     'confidence_level': 'Low',
                     'notes': 'Price estimation not available for this analysis.'

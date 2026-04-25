@@ -1,4 +1,4 @@
-# ChronoVerify
+# Backend
 
 
 
@@ -15,14 +15,14 @@ Already a pro? Just edit this README.md and make it your own. Want to make it ea
 
 ```
 cd existing_repo
-git remote add origin https://gitlab.betopialimited.com/Morshed07/chronoverify.git
+git remote add origin https://gitlab.betopialimited.com/join-venture-ai/chronoverify/backend.git
 git branch -M main
 git push -uf origin main
 ```
 
 ## Integrate with your tools
 
-- [ ] [Set up project integrations](https://gitlab.betopialimited.com/Morshed07/chronoverify/-/settings/integrations)
+- [ ] [Set up project integrations](https://gitlab.betopialimited.com/join-venture-ai/chronoverify/backend/-/settings/integrations)
 
 ## Collaborate with your team
 
