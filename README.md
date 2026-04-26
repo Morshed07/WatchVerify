@@ -2,10 +2,11 @@
 
 ![Django](https://img.shields.io/badge/Django-Framework-green)
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
+![Firebase](https://img.shields.io/badge/Firebase-Integrated-orange)
+![RevenueCat](https://img.shields.io/badge/RevenueCat-Subscriptions-purple)
 ![License](https://img.shields.io/badge/License-MIT-yellow)
-![Status](https://img.shields.io/badge/Status-Active-success)
 
-**WatchVerify** is a powerful Django-based analytics and monitoring platform designed to track user behavior, subscriptions, reports, revenue, and system health — all from a modern admin dashboard.
+**WatchVerify** is a Django-based analytics and monitoring platform that provides real-time insights into user activity, subscriptions, revenue, and system performance — enhanced with **RevenueCat for subscription management** and **Firebase for real-time services & notifications**.
 
 ---
 
@@ -19,145 +20,204 @@
 
 ### 📈 User Analytics
 
-* Total registered users
-* Daily active users
-* Free vs premium segmentation
-* Conversion tracking
+* Total users & active users
+* Free vs premium tracking
+* Conversion rate monitoring
+
+### 💳 Subscription Management (RevenueCat)
+
+* Cross-platform subscription handling
+* Webhook-based backend sync
+* Plans: Monthly / Yearly / Unlimited
+* Real-time subscription status updates
+
+### 🔥 Firebase Integration
+
+* Push notifications (FCM)
+* Real-time updates
+* Event tracking & analytics
+* Optional authentication support
 
 ### 📊 Reports & Insights
 
-* Reports by category
-* Monthly report generation
-* Analysis trends visualization
+* Reports by type
+* Monthly trends
+* Usage analytics
 
-### 🌍 Geographic Insights
+### 💰 Revenue Tracking
 
-* Users by country
-* Market distribution
-* Currency tracking
-
-### 💰 Revenue Monitoring
-
-* Monthly revenue overview
+* Monthly revenue
 * Subscription-based earnings
-* Conversion rate tracking
+* Conversion metrics
 
 ### 🤖 AI & Cost Monitoring
 
 * API usage tracking
-* Cost vs revenue analysis
-* AI call monitoring
+* Cost vs revenue comparison
 
-### ⚙️ System Health Monitoring
+### ⚙️ System Health
 
-* API uptime tracking
-* Database health status
-* Error rate monitoring
-
-### 🧾 Error Logging
-
-* Real-time system error logs
-* Debugging insights
-* Failure tracking
+* API uptime
+* Database health
+* Error monitoring
 
 ---
 
 ## 🏗️ Tech Stack
 
-| Layer      | Technology                          |
-| ---------- | ----------------------------------- |
-| Backend    | Django, Django REST Framework       |
-| Database   | PostgreSQL / SQLite                 |
-| Frontend   | Django Templates / Flutter |
-| Charts     | Chart.js / Recharts                 |
-| Auth       | Django Auth JWT                   |
-| Deployment | Vps / Nginx / Gunicorn           |
+| Layer        | Technology                    |
+| ------------ | ----------------------------- |
+| Backend      | Django, Django REST Framework |
+| Database     | PostgreSQL / SQLite           |
+| Auth         | Firebase                      |
+| Subscription | RevenueCat                    |
+| Frontend     | Flutter                       |
+| Charts       | Chart.js / Recharts           |
 
 ---
 
 ## ⚡ Getting Started
 
-### 1️⃣ Clone Repository
+### 1️⃣ Clone Repo
 
-```bash
+```bash id="cln1"
 git clone https://github.com/your-username/watchverify.git
 cd watchverify
 ```
 
-### 2️⃣ Create Virtual Environment
+---
 
-```bash
+### 2️⃣ Setup Environment
+
+```bash id="env2"
 python -m venv venv
-```
-
-Activate:
-
-```bash
-# Windows
-venv\Scripts\activate
-
-# Mac/Linux
-source venv/bin/activate
-```
-
-### 3️⃣ Install Dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 4️⃣ Setup Environment Variables
-
-Create a `.env` file:
-
-```env
-DEBUG=True
-SECRET_KEY=your_secret_key
-DATABASE_URL=sqlite:///db.sqlite3
-ALLOWED_HOSTS=127.0.0.1,localhost
+venv\Scripts\activate  # Windows
+# source venv/bin/activate  # Mac/Linux
 ```
 
 ---
 
-### 5️⃣ Run Migrations
+### 3️⃣ Install Dependencies
 
-```bash
+```bash id="dep3"
+pip install -r requirements.txt
+```
+
+---
+
+### 4️⃣ Environment Variables
+
+Create `.env` file:
+
+```env id="envfile4"
+DEBUG=True
+SECRET_KEY=your_secret_key
+
+DATABASE_URL=sqlite:///db.sqlite3
+
+# Firebase
+FIREBASE_CREDENTIALS=path/to/firebase.json
+FIREBASE_API_KEY=your_api_key
+
+# RevenueCat
+REVENUECAT_API_KEY=your_revenuecat_api_key
+REVENUECAT_WEBHOOK_SECRET=your_webhook_secret
+
+ALLOWED_HOSTS=*
+```
+
+---
+
+### 5️⃣ Run Project
+
+```bash id="run5"
 python manage.py migrate
-```
-
-### 6️⃣ Create Superuser
-
-```bash
 python manage.py createsuperuser
-```
-
-### 7️⃣ Run Server
-
-```bash
 python manage.py runserver
 ```
 
-App will run at:
-👉 http://127.0.0.1:8000/
+---
+
+## 🔗 RevenueCat Integration
+
+### 📦 Subscription Packages Example
+
+| Package ID        | Product Identifier        |
+| ----------------- | ------------------------- |
+| premium_analysis  | premium-analysis          |
+| standard_analysis | standard-analysis         |
+| unlimited_monthly | premium-unlimited-monthly |
+| unlimited_yearly  | premium-unlimited-yearly  |
+
+---
+
+### 🔔 Webhook Setup
+
+* Endpoint:
+
+```
+/api/webhooks/revenuecat/
+```
+
+* Handles:
+
+  * Purchase events
+  * Renewals
+  * Cancellations
+  * Expirations
+
+### 🔁 Flow
+
+1. User purchases subscription (mobile/web)
+2. RevenueCat processes purchase
+3. Webhook triggers Django backend
+4. Backend updates user subscription
+
+---
+
+## 🔥 Firebase Integration (Authentication)
+
+WatchVerify uses **Firebase Authentication** to handle secure user login and identity management.
+
+### 🔐 Features Used:
+- Email & Password Authentication
+- Google Sign-In (optional)
+- Secure token-based authentication
+- Firebase ID token verification in Django backend
+
+---
+
+### ⚙️ Setup
+
+1. Create a Firebase project
+2. Enable **Authentication → Sign-in methods**
+3. Download service account JSON
+4. Add credentials in `.env`
+
+```env
+FIREBASE_CREDENTIALS=path/to/firebase.json
+FIREBASE_API_KEY=your_api_key
 
 ---
 
 ## 📁 Project Structure
 
-```bash
+```bash id="struct6"
 watchverify/
 │── apps/
 │   ├── users/
 │   ├── subscriptions/
 │   ├── analytics/
 │   ├── reports/
-│   ├── payment/
+│   ├── payments/
 │
-│── chronoverify/
+│── core/
+│── services/
+│   ├── firebase/
+│   ├── revenuecat/
+│
 │── templates/
 │── static/
-│── media/
-│── config/
 │── manage.py
 ```
 
@@ -165,102 +225,61 @@ watchverify/
 
 ## 📡 API Endpoints
 
-| Endpoint              | Method | Description       |
-| --------------------- | ------ | ----------------- |
-| `/api/users/`         | GET    | List users        |
-| `/api/subscriptions/` | GET    | Subscription data |
-| `/api/reports/`       | GET    | Reports data      |
-| `/api/analytics/`     | GET    | Dashboard metrics |
-| `/api/errors/`        | GET    | Error logs        |
+| Endpoint                    | Description        |
+| --------------------------- | ------------------ |
+| `/api/users/`               | Users              |
+| `/api/subscriptions/`       | Subscription data  |
+| `/api/analytics/`           | Dashboard metrics  |
+| `/api/revenue/`             | Revenue stats      |
+| `/api/webhooks/revenuecat/` | RevenueCat webhook |
 
 ---
 
-## 🔐 Authentication
+## 🐳 Docker (Optional)
 
-* FireBase Authentication
-* JWT Authentication
-
----
-
-## 🐳 Docker Setup (Optional)
------If you want you can use docker-----
-
-```bash
-# Build container
+```bash id="docker7"
 docker build -t watchverify .
-
-# Run container
-docker run -d -p 8000:8000 watchverify
+docker run -p 8000:8000 watchverify
 ```
 
 ---
 
-## 🚀 Deployment Guide
-
-### Using Gunicorn + Nginx
-
-```bash
-pip install gunicorn
-gunicorn config.wsgi:application
-```
-
-Configure **Nginx** as reverse proxy.
-
----
-
-### Recommended Hosting
+## 🚀 Deployment
 
 * AWS EC2
 * DigitalOcean
 * Render
 * Railway
 
+Use:
+
+```bash id="gunicorn8"
+gunicorn config.wsgi:application
+```
+
 ---
 
 ## 🧪 Testing
 
-```bash
+```bash id="test9"
 python manage.py test
 ```
 
 ---
 
-## 📊 Future Improvements
-
-* 🔔 Real-time notifications (WebSockets)
-* 📱 Fully responsive mobile dashboard
-* 🤖 Advanced AI insights
-* 🔐 Role-based access control (RBAC)
-* 📦 SaaS billing integration (Stripe)
-
----
-
 ## 🤝 Contributing
 
-```bash
-# Fork repo
-# Create branch
+```bash id="contri10"
 git checkout -b feature-name
-
-# Commit
-git commit -m "Added feature"
-
-# Push
+git commit -m "feature added"
 git push origin feature-name
 ```
 
 ---
 
-## 🐞 Known Issues
-
-* Minor UI inconsistencies on small screens
-* API optimization pending for large datasets
-
----
-
 ## 📄 License
 
-This project is licensed under the **MIT License**.
+MIT License
 
 ---
 
@@ -272,10 +291,4 @@ This project is licensed under the **MIT License**.
 
 ## ⭐ Support
 
-If you like this project:
-
-👉 Give it a ⭐ on GitHub
-👉 Share with others
-👉 Contribute 🚀
-
----
+Give a ⭐ if you like this project!

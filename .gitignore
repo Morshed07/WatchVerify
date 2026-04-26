@@ -4,7 +4,6 @@
 *.so
 .Python
 env
-.env
 venv
 .venv
 build/
@@ -35,7 +34,6 @@ htmlcov/
 .pyre/
 .ipynb_checkpoints
 .ruff_cache/
-.vscode/
 
 # Django specific
 *.log
@@ -49,7 +47,6 @@ db.sqlite3
 
 # IDEs and Editors
 .idea/
-.vscode/
 *.swp
 *.bak
 *.swo
@@ -59,5 +56,6 @@ db.sqlite3
 Thumbs.db
 
 # Environment variables
-.env
 firebase/*.json
+config.bat
+node_modules
